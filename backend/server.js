@@ -9,8 +9,8 @@ app.use(express.json());
 const connectWithDb = require('./config/database');
 connectWithDb();
 
-const user = require('./routes/User');
-app.use('/api/v1',user);
+const User = require('./routes/User');
+app.use('/api/v1',User);
 
 app.listen(PORT,()=>{
     console.log(`App is running on ${PORT}`)
