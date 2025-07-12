@@ -1,26 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useForm } from 'react-hook-form';
-import axios from 'axios';
-import toast from 'react-hot-toast';
-import { 
-  User, 
-  Mail, 
-  Calendar, 
-  MessageSquare, 
-  ThumbsUp,
-  Edit,
-  Save,
-  X
-} from 'lucide-react';
+import { User, Edit, Save, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 const Profile = () => {
   const { user, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [userQuestions, setUserQuestions] = useState([]);
-  const [userAnswers, setUserAnswers] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   const {
     register,
@@ -33,32 +19,12 @@ const Profile = () => {
     }
   });
 
-  useEffect(() => {
-    fetchUserContent();
-  }, []);
-
-  const fetchUserContent = async () => {
-    try {
-      const [questionsRes, answersRes] = await Promise.all([
-        axios.get(`/questions?author=${user._id}&limit=5`),
-        axios.get(`/answers?author=${user._id}&limit=5`)
-      ]);
-      
-      setUserQuestions(questionsRes.data.questions);
-      setUserAnswers(answersRes.data.answers);
-    } catch (error) {
-      console.error('Error fetching user content:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleUpdateProfile = async (data) => {
     try {
       await updateProfile(data);
       setIsEditing(false);
     } catch (error) {
-      // Error is handled by the auth context
+      // Error handled in context
     }
   };
 
@@ -66,201 +32,132 @@ const Profile = () => {
     return formatDistanceToNow(new Date(date), { addSuffix: true });
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
   return (
-    <div className="max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
+<div className="min-h-screen bg-gray-50 flex flex-col items-center px-4 pt-6">
+
+      {/* Heading */}
+      <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Profile</h1>
-        <p className="text-gray-600">Manage your account and view your activity</p>
+        <p className="text-gray-600">Manage your account</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Profile Info */}
-        <div className="lg:col-span-1">
-          <div className="card p-6">
-            <div className="text-center mb-6">
-              <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <User className="w-10 h-10 text-primary-600" />
-              </div>
-              <h2 className="text-xl font-bold text-gray-900">{user.username}</h2>
-              <p className="text-gray-600">{user.email}</p>
-            </div>
+      {/* Profile Card */}
+      <div className="w-full max-w-xl bg-white p-6 rounded-xl shadow-sm border">
+        <div className="text-center mb-6">
+          <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <User className="w-10 h-10 text-blue-600" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900">{user.username}</h2>
+          <p className="text-gray-600">{user.email}</p>
+        </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Member since</span>
-                <span className="font-medium">
-                  {formatDate(user.joinedAt)}
-                </span>
+        {!isEditing ? (
+          <>
+            <div className="space-y-4 text-sm text-gray-700">
+              <div className="flex justify-between">
+                <span>Member since</span>
+                <span className="font-medium">{formatDate(user.joinedAt)}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Reputation</span>
+              <div className="flex justify-between">
+                <span>Reputation</span>
                 <span className="font-medium">{user.reputation}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Questions</span>
+              <div className="flex justify-between">
+                <span>Questions</span>
                 <span className="font-medium">{user.questionsCount}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Answers</span>
+              <div className="flex justify-between">
+                <span>Answers</span>
                 <span className="font-medium">{user.answersCount}</span>
               </div>
             </div>
 
             <button
-              onClick={() => setIsEditing(!isEditing)}
-              className="w-full mt-6 btn-outline"
+              onClick={() => setIsEditing(true)}
+              className="w-full mt-6 flex items-center justify-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 border bg-blue-100 text-blue-600 border-blue-300 hover:bg-blue-200 shadow-sm hover:shadow-md font-medium"
             >
-              {isEditing ? (
-                <>
-                  <X className="w-4 h-4 mr-2" />
-                  Cancel
-                </>
-              ) : (
-                <>
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit Profile
-                </>
-              )}
+              <Edit className="w-4 h-4" />
+              Edit Profile
             </button>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Edit Profile Form */}
-          {isEditing && (
-            <div className="card p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Edit Profile</h3>
-              <form onSubmit={handleSubmit(handleUpdateProfile)} className="space-y-4">
-                <div>
-                  <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                    Username
-                  </label>
-                  <input
-                    type="text"
-                    id="username"
-                    {...register('username', {
-                      required: 'Username is required',
-                      minLength: {
-                        value: 3,
-                        message: 'Username must be at least 3 characters'
-                      },
-                      maxLength: {
-                        value: 30,
-                        message: 'Username must be less than 30 characters'
-                      },
-                      pattern: {
-                        value: /^[a-zA-Z0-9_]+$/,
-                        message: 'Username can only contain letters, numbers, and underscores'
-                      }
-                    })}
-                    className={`input ${errors.username ? 'border-red-500' : ''}`}
-                  />
-                  {errors.username && (
-                    <p className="mt-1 text-sm text-red-600">{errors.username.message}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    {...register('email', {
-                      required: 'Email is required',
-                      pattern: {
-                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: 'Invalid email address'
-                      }
-                    })}
-                    className={`input ${errors.email ? 'border-red-500' : ''}`}
-                  />
-                  {errors.email && (
-                    <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-                  )}
-                </div>
-
-                <div className="flex gap-4">
-                  <button type="submit" className="btn-primary">
-                    <Save className="w-4 h-4 mr-2" />
-                    Save Changes
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditing(false)}
-                    className="btn-outline"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
+          </>
+        ) : (
+          <form onSubmit={handleSubmit(handleUpdateProfile)} className="space-y-5">
+            <div>
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Username
+              </label>
+              <input
+                type="text"
+                id="username"
+                {...register('username', {
+                  required: 'Username is required',
+                  minLength: { value: 3, message: 'Min 3 characters' },
+                  maxLength: { value: 30, message: 'Max 30 characters' },
+                  pattern: {
+                    value: /^[a-zA-Z0-9_]+$/,
+                    message: 'Only letters, numbers, and underscores'
+                  }
+                })}
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.username ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+              {errors.username && (
+                <p className="text-sm text-red-600 mt-1">{errors.username.message}</p>
+              )}
             </div>
-          )}
 
-          {/* Recent Questions */}
-          <div className="card p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Questions</h3>
-            {userQuestions.length === 0 ? (
-              <p className="text-gray-500">No questions yet</p>
-            ) : (
-              <div className="space-y-3">
-                {userQuestions.map((question) => (
-                  <div key={question._id} className="border-b border-gray-200 pb-3 last:border-b-0">
-                    <a
-                      href={`/questions/${question._id}`}
-                      className="text-primary-600 hover:text-primary-700 font-medium"
-                    >
-                      {question.title}
-                    </a>
-                    <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
-                      <span>{formatDate(question.createdAt)}</span>
-                      <span>{question.answers?.length || 0} answers</span>
-                      <span>{question.voteCount} votes</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                {...register('email', {
+                  required: 'Email is required',
+                  pattern: {
+                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                    message: 'Invalid email address'
+                  }
+                })}
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.email ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+              {errors.email && (
+                <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>
+              )}
+            </div>
 
-          {/* Recent Answers */}
-          <div className="card p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Answers</h3>
-            {userAnswers.length === 0 ? (
-              <p className="text-gray-500">No answers yet</p>
-            ) : (
-              <div className="space-y-3">
-                {userAnswers.map((answer) => (
-                  <div key={answer._id} className="border-b border-gray-200 pb-3 last:border-b-0">
-                    <a
-                      href={`/questions/${answer.question}`}
-                      className="text-primary-600 hover:text-primary-700 font-medium"
-                    >
-                      {answer.questionTitle || 'Question'}
-                    </a>
-                    <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
-                      <span>{formatDate(answer.createdAt)}</span>
-                      <span>{answer.voteCount} votes</span>
-                      {answer.isAccepted && (
-                        <span className="text-green-600 font-medium">✓ Accepted</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+            <div className="flex flex-col sm:flex-row gap-4 pt-2">
+              <button
+                type="submit"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              >
+                <Save className="w-4 h-4" />
+                Save Changes
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsEditing(false)}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition"
+              >
+                <X className="w-4 h-4" />
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );
 };
 
-export default Profile; 
+export default Profile;
